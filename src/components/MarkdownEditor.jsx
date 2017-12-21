@@ -3,10 +3,8 @@ import TodoItem from './TodoItem.jsx';
 import React from 'react';
 
 
-const initialContent = (
-	JSON.parse(localStorage.getItem('content')) ||
-{"document":{"data":{},"kind":"document","nodes":[{"data":{},"kind":"block","isVoid":false,"type":"heading-one","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Hey there.","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Moment supports Markdown. You can create titles by typing # + space","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":true},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Install Chrome extension","marks":[]}]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Create task lists by typing -","marks":[]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Click the circle to complete the task","marks":[]}]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Read articles","marks":[]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Get started","marks":[]}]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{"checked":true},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]}]},"kind":"state"}
-)
+const initialContent = {"document":{"data":{},"kind":"document","nodes":[{"data":{},"kind":"block","isVoid":false,"type":"heading-one","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Hey there.","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Moment supports Markdown. You can create titles by typing # + space","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":true},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Install Chrome extension","marks":[]}]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Create task lists by typing -","marks":[]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Click the circle to complete the task","marks":[]}]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"bulleted-list","nodes":[{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Read articles","marks":[]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"list-item","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"Get started","marks":[]}]}]}]},{"data":{"checked":false},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{"checked":true},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]},{"data":{},"kind":"block","isVoid":false,"type":"paragraph","nodes":[{"kind":"text","ranges":[{"kind":"range","text":"","marks":[]}]}]}]},"kind":"state"};
+
 
 
 /**
@@ -46,6 +44,12 @@ class MarkdownEditor extends React.Component {
 	componentWillMount(){
 		this.visible = true;
 
+		chrome.storage.sync.get('content', (data) => {
+				// Update the content from chrome synced storage
+				let updatedContent = data.content && JSON.parse(data.content) || initialContent;
+				this.setState({ state: Raw.deserialize(updatedContent, { terse: true }) });
+			});
+
 		document.addEventListener('visibilitychange', this.visibilityChangeEvent);
 
 	}
@@ -67,9 +71,11 @@ class MarkdownEditor extends React.Component {
 			// Tab has become active again
 			this.visible = true;
 
-			// Update the content from local storage
-			let updatedContent = JSON.parse(localStorage.getItem('content')) || initialContent;
-			this.setState({ state: Raw.deserialize(updatedContent, { terse: true }) });
+			chrome.storage.sync.get('content', (data) => {
+				// Update the content from chrome synced storage
+				let updatedContent = data.content && JSON.parse(data.content) || initialContent;
+				this.setState({ state: Raw.deserialize(updatedContent, { terse: true }) });
+			});
 		}
 
 	}
@@ -108,8 +114,8 @@ class MarkdownEditor extends React.Component {
 	onChange = (state) => {
 		this.setState({ state });
 
-		const content = JSON.stringify(Raw.serialize(state))
-		localStorage.setItem('content', content)
+		const content = JSON.stringify(Raw.serialize(state));
+		chrome.storage.sync.set({'content': content});
 	}
 
 	/**

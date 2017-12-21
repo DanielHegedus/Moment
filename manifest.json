@@ -11,5 +11,8 @@
 	"icons": {
 		"128": "moment128.png"
 	},
-	"manifest_version": 2
+	"manifest_version": 2,
+	"permissions": [
+		"storage"
+	]
 }
